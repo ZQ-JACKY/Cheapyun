@@ -111,10 +111,16 @@ async function autoSignin() {
     
     // 等待页面加载
     console.log('8. 等待签到页面加载...');
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise(resolve => setTimeout(resolve, 10000)); // 增加等待时间
+    
+    // 获取页面状态信息
+    const pageTitle = await page.title();
+    const currentUrl = await page.url();
+    console.log('8.1 页面标题：', pageTitle);
+    console.log('8.2 当前URL：', currentUrl);
     
     // 截图：签到页面
-    console.log('8.1 保存签到页面截图...');
+    console.log('8.3 保存签到页面截图...');
     await page.screenshot({ path: path.join(screenshotDir, '1-signin-page.png'), fullPage: true });
     
     // 使用提供的XPath点击签到按钮
@@ -123,23 +129,85 @@ async function autoSignin() {
     
     try {
       // 使用提供的XPath
-      const xpath = '//*[@id="app"]/section/div[2]/div/div[1]/div/section/div/div[1]/div/div[2]/div/div[3]/div/div/div/div[2]/a';
+      const xpath = '//*[@id="app"]/section/div[2]/div/div[1]/div/section/div/div[1]/div/div[2]/div/div[2]/div/div/div/div[2]/a';
+      console.log('9.1 使用XPath：', xpath);
       
-      // 等待元素出现并可点击
-      await page.waitForFunction((xpath) => {
-        const elements = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-        return elements.snapshotLength > 0;
-      }, { timeout: 30000 }, xpath);
+      // 多次尝试查找并点击元素
+      const maxAttempts = 10;
+      const attemptDelay = 3000;
       
-      // 查找并点击元素
-      const [element] = await page.$x(xpath);
-      if (element) {
-        await element.click();
-        signinClicked = true;
-        console.log('9.1 签到按钮点击成功');
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        console.log(`9.2 尝试第 ${attempt} 次...`);
+        
+        // 直接查找元素
+        const [element] = await page.$x(xpath);
+        
+        if (element) {
+          console.log('9.3 找到签到按钮，准备点击...');
+          
+          // 检查元素是否可见
+          const isVisible = await page.evaluate(el => {
+            const style = window.getComputedStyle(el);
+            return style.display !== 'none' && style.visibility === 'visible' && style.opacity !== '0';
+          }, element);
+          
+          if (isVisible) {
+            await element.click();
+            signinClicked = true;
+            console.log('9.4 签到按钮点击成功');
+            break;
+          } else {
+            console.log('9.5 签到按钮存在但不可见');
+          }
+        } else {
+          console.log('9.6 未找到签到按钮，等待重试...');
+        }
+        
+        // 等待一段时间后重试
+        if (attempt < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, attemptDelay));
+        }
       }
+      
+      if (!signinClicked) {
+        console.log('9.7 多次尝试后仍未找到签到按钮');
+      }
+      
     } catch (e) {
-      console.log('9.1 签到按钮点击失败：', e.message);
+      console.log('9.8 签到按钮点击失败：', e.message);
+      
+      // 输出更多调试信息
+      try {
+        const pageContent = await page.content();
+        console.log('9.9 页面内容长度：', pageContent.length);
+        console.log('9.10 保存详细错误截图...');
+        await page.screenshot({ path: path.join(screenshotDir, 'signin-button-error.png'), fullPage: true });
+        
+        // 尝试查找页面中的所有链接和按钮
+        console.log('9.11 查找页面中的所有可点击元素...');
+        const clickableElements = await page.$$('a, button');
+        console.log('9.12 找到可点击元素数量：', clickableElements.length);
+        
+        // 尝试获取页面中包含"签到"或"领取"的元素
+        console.log('9.13 查找包含签到相关文字的元素...');
+        const elements = await page.$$('*');
+        let foundElements = 0;
+        for (let element of elements) {
+          try {
+            const text = await element.evaluate(el => el.textContent);
+            if (text && (text.includes('签到') || text.includes('领取'))) {
+              console.log('9.14 找到相关元素：', text.trim());
+              foundElements++;
+              if (foundElements >= 5) break; // 只输出前5个
+            }
+          } catch (innerError) {
+            // 忽略单个元素的错误
+          }
+        }
+        
+      } catch (debugError) {
+        console.log('9.15 调试信息获取失败：', debugError.message);
+      }
     }
     
     // 等待签到完成
