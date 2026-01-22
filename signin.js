@@ -101,26 +101,39 @@ async function autoSignin() {
     console.log('5.1 保存登录成功后截图...');
     await page.screenshot({ path: '3-after-login.png', fullPage: true });
     
-    // 尝试点击左上角的菜单按钮（如果存在）
+    // 尝试点击左上角的菜单按钮
     console.log('5.2 尝试点击左上角菜单按钮...');
     await page.evaluate(() => {
-      // 尝试查找左上角的菜单按钮
+      // 尝试查找左上角的菜单按钮（三条横线图标）
       const menuButtons = [
-        document.querySelector('.el-menu-demo .el-menu-item'),
+        document.querySelector('.el-menu'),
         document.querySelector('.sidebar-toggle'),
         document.querySelector('.menu-button'),
         document.querySelector('#sidebar-toggle'),
         document.querySelector('#menu-button'),
         document.querySelector('button[class*="menu"]'),
         document.querySelector('i[class*="menu"]'),
+        document.querySelector('i[class*="bars"]'),
+        document.querySelector('i[class*="nav"]'),
         document.querySelector('.logo + button'),
         document.querySelector('.logo + i'),
-        document.querySelector('.el-aside .el-menu')
+        document.querySelector('.el-aside .el-menu'),
+        document.querySelector('.el-header button'),
+        document.querySelector('.el-header i')
       ];
       
       for (let button of menuButtons) {
         if (button) {
           button.click();
+          return true;
+        }
+      }
+      
+      // 尝试点击左上角的任何按钮
+      const topLeftElements = document.querySelectorAll('.el-header > *');
+      for (let element of topLeftElements) {
+        if (element.tagName === 'BUTTON' || element.tagName === 'I' || element.style.cursor === 'pointer') {
+          element.click();
           return true;
         }
       }
@@ -135,33 +148,33 @@ async function autoSignin() {
     console.log('5.3 保存菜单展开后截图...');
     await page.screenshot({ path: '3a-after-menu.png', fullPage: true });
     
-    // 尝试点击积分中心
+    // 尝试点击左侧菜单的第二个或第三个项目（假设是积分中心）
     console.log('6. 正在点击积分中心...');
     let pointCenterClicked = false;
     
     await page.evaluate(() => {
-      // 方法1：通过文本内容查找积分中心
-      const elements = document.querySelectorAll('*');
-      for (let element of elements) {
-        if (element.textContent && element.textContent.trim() === '积分中心') {
-          element.click();
+      // 方法1：通过左侧菜单项目索引点击
+      const menuItems = document.querySelectorAll('.el-menu-item, .el-submenu__title, .nav-item');
+      if (menuItems.length >= 3) {
+        // 假设第三个项目是积分中心
+        menuItems[2].click();
+        return true;
+      }
+      
+      // 方法2：通过包含图标的元素点击
+      const iconElements = document.querySelectorAll('i[class*="icon"]');
+      for (let i = 0; i < iconElements.length; i++) {
+        if (i === 2) { // 假设第三个图标是积分中心
+          iconElements[i].click();
           return true;
         }
       }
       
-      // 方法2：通过包含文本查找
-      for (let element of elements) {
-        if (element.textContent && element.textContent.includes('积分中心')) {
-          element.click();
-          return true;
-        }
-      }
-      
-      // 方法3：通过左侧菜单查找
-      const leftMenuItems = document.querySelectorAll('.el-menu-item, .el-submenu__title');
-      for (let item of leftMenuItems) {
-        if (item.textContent && item.textContent.includes('积分')) {
-          item.click();
+      // 方法3：通过左侧导航栏的元素点击
+      const leftNavElements = document.querySelectorAll('.el-aside *');
+      for (let i = 0; i < leftNavElements.length; i++) {
+        if (i > 0 && i < leftNavElements.length - 1) {
+          leftNavElements[i].click();
           return true;
         }
       }
@@ -184,42 +197,33 @@ async function autoSignin() {
     console.log('6.2 保存点击积分中心后截图...');
     await page.screenshot({ path: '4-after-point-center.png', fullPage: true });
     
-    // 尝试点击任务大厅
+    // 尝试点击任务大厅（假设是左侧菜单的第四个项目）
     console.log('7. 正在点击任务大厅...');
     let taskHallClicked = false;
     
     await page.evaluate(() => {
-      // 方法1：通过文本内容查找任务大厅
-      const elements = document.querySelectorAll('*');
-      for (let element of elements) {
-        if (element.textContent && element.textContent.trim() === '任务大厅') {
-          element.click();
+      // 方法1：通过左侧菜单项目索引点击
+      const menuItems = document.querySelectorAll('.el-menu-item, .el-submenu__title, .nav-item');
+      if (menuItems.length >= 4) {
+        // 假设第四个项目是任务大厅
+        menuItems[3].click();
+        return true;
+      }
+      
+      // 方法2：通过包含图标的元素点击
+      const iconElements = document.querySelectorAll('i[class*="icon"]');
+      for (let i = 0; i < iconElements.length; i++) {
+        if (i === 3) { // 假设第四个图标是任务大厅
+          iconElements[i].click();
           return true;
         }
       }
       
-      // 方法2：通过包含文本查找
-      for (let element of elements) {
-        if (element.textContent && element.textContent.includes('任务大厅')) {
-          element.click();
-          return true;
-        }
-      }
-      
-      // 方法3：通过左侧菜单查找
-      const leftMenuItems = document.querySelectorAll('.el-menu-item, .el-submenu__title');
-      for (let item of leftMenuItems) {
-        if (item.textContent && item.textContent.includes('任务')) {
-          item.click();
-          return true;
-        }
-      }
-      
-      // 方法4：通过顶部导航查找
-      const topNavItems = document.querySelectorAll('.el-tabs__item, .nav-item, .menu-item');
-      for (let item of topNavItems) {
-        if (item.textContent && item.textContent.includes('任务')) {
-          item.click();
+      // 方法3：尝试点击页面中的任何按钮
+      const buttons = document.querySelectorAll('button');
+      for (let button of buttons) {
+        if (button.textContent || button.style.cursor === 'pointer') {
+          button.click();
           return true;
         }
       }
@@ -247,28 +251,29 @@ async function autoSignin() {
     let signinClicked = false;
     
     await page.evaluate(() => {
-      // 方法1：通过文本内容查找签到按钮
+      // 方法1：尝试点击页面中的所有按钮
+      const buttons = document.querySelectorAll('button');
+      for (let button of buttons) {
+        if (button.textContent || button.style.cursor === 'pointer') {
+          button.click();
+          return true;
+        }
+      }
+      
+      // 方法2：尝试点击页面中包含数字的元素
       const elements = document.querySelectorAll('*');
       for (let element of elements) {
-        if (element.textContent && (element.textContent.includes('签到') || element.textContent.includes('每日签'))) {
+        if (element.textContent && !isNaN(element.textContent.trim()) && element.style.cursor === 'pointer') {
           element.click();
           return true;
         }
       }
       
-      // 方法2：通过按钮查找
-      const buttons = document.querySelectorAll('button');
-      for (let button of buttons) {
-        if (button.textContent && button.textContent.includes('签到')) {
-          button.click();
-          return true;
-        }
-      }
-      
-      // 方法3：通过包含"领取"的按钮查找
-      for (let button of buttons) {
-        if (button.textContent && button.textContent.includes('领取')) {
-          button.click();
+      // 方法3：尝试点击页面中的卡片元素
+      const cards = document.querySelectorAll('.el-card, .card, .panel');
+      for (let card of cards) {
+        if (card.textContent) {
+          card.click();
           return true;
         }
       }
