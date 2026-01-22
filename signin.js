@@ -38,14 +38,14 @@ async function autoSignin() {
     await page.setViewport({ width: 1366, height: 768 });
     
     // 访问网站
-    console.log('正在访问 https://cheapyun.com/#/home/index...');
-    await page.goto('https://cheapyun.com/#/home/index', {
+    console.log('正在访问 https://cheapyun.com/#/login...');
+    await page.goto('https://cheapyun.com/#/login', {
       waitUntil: 'networkidle2',
       timeout: 60000
     });
     
     // 等待登录页面加载
-    await page.waitForTimeout(3000);
+    await page.waitFor(3000);
     
     // 输入账号
     console.log('正在输入账号...');
