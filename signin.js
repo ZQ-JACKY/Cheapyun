@@ -38,7 +38,7 @@ async function autoSignin() {
     await page.setViewport({ width: 1366, height: 768 });
     
     // 访问网站
-    console.log('正在访问 https://cheapyun.com/#/login...');
+    console.log('正在访问 https://cheapyun.com/#/login');
     await page.goto('https://cheapyun.com/#/login', {
       waitUntil: 'networkidle2',
       timeout: 60000
@@ -49,15 +49,40 @@ async function autoSignin() {
     
     // 输入账号
     console.log('正在输入账号...');
-    await page.type('input[type="text"]', username, { delay: 100 });
+    await page.evaluate((user) => {
+      const input = document.querySelector('input[type="text"]');
+      if (input) {
+        input.value = user;
+        // 触发输入事件
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }, username);
+    
+    // 等待一下
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     // 输入密码
     console.log('正在输入密码...');
-    await page.type('input[type="password"]', password, { delay: 100 });
+    await page.evaluate((pass) => {
+      const input = document.querySelector('input[type="password"]');
+      if (input) {
+        input.value = pass;
+        // 触发输入事件
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }, password);
+    
+    // 等待一下
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     // 点击登录按钮
     console.log('正在点击登录按钮...');
-    await page.click('button[type="button"]');
+    await page.evaluate(() => {
+      const button = document.querySelector('button[type="button"]');
+      if (button) {
+        button.click();
+      }
+    });
     
     // 等待登录成功
     await new Promise(resolve => setTimeout(resolve, 5000));
@@ -68,53 +93,64 @@ async function autoSignin() {
     
     // 点击积分中心
     console.log('正在点击积分中心...');
-    // 使用XPath或其他选择器定位积分中心
-    try {
-      await page.waitForSelector('a[href*="point"]', { timeout: 10000 });
-      await page.click('a[href*="point"]');
-    } catch (e) {
-      console.log('尝试使用XPath定位积分中心...');
-      const pointCenterSelector = '//*[contains(text(), "积分中心")]';
-      await page.waitForXPath(pointCenterSelector, { timeout: 10000 });
-      const [pointCenterElement] = await page.$x(pointCenterSelector);
-      if (pointCenterElement) {
-        await pointCenterElement.click();
+    await page.evaluate(() => {
+      // 尝试通过文本内容查找积分中心
+      const links = document.querySelectorAll('a');
+      for (let link of links) {
+        if (link.textContent.includes('积分中心')) {
+          link.click();
+          return;
+        }
       }
-    }
+      // 尝试通过href查找
+      const pointLinks = document.querySelectorAll('a[href*="point"]');
+      if (pointLinks.length > 0) {
+        pointLinks[0].click();
+      }
+    });
     
     await new Promise(resolve => setTimeout(resolve, 3000));
     
     // 点击任务大厅
     console.log('正在点击任务大厅...');
-    try {
-      await page.waitForSelector('a[href*="task"]', { timeout: 10000 });
-      await page.click('a[href*="task"]');
-    } catch (e) {
-      console.log('尝试使用XPath定位任务大厅...');
-      const taskHallSelector = '//*[contains(text(), "任务大厅")]';
-      await page.waitForXPath(taskHallSelector, { timeout: 10000 });
-      const [taskHallElement] = await page.$x(taskHallSelector);
-      if (taskHallElement) {
-        await taskHallElement.click();
+    await page.evaluate(() => {
+      // 尝试通过文本内容查找任务大厅
+      const links = document.querySelectorAll('a');
+      for (let link of links) {
+        if (link.textContent.includes('任务大厅')) {
+          link.click();
+          return;
+        }
       }
-    }
+      // 尝试通过href查找
+      const taskLinks = document.querySelectorAll('a[href*="task"]');
+      if (taskLinks.length > 0) {
+        taskLinks[0].click();
+      }
+    });
     
     await new Promise(resolve => setTimeout(resolve, 3000));
     
     // 点击签到按钮
     console.log('正在点击签到按钮...');
-    try {
-      await page.waitForSelector('button:contains("签到")', { timeout: 10000 });
-      await page.click('button:contains("签到")');
-    } catch (e) {
-      console.log('尝试使用XPath定位签到按钮...');
-      const signinSelector = '//*[contains(text(), "签到")]';
-      await page.waitForXPath(signinSelector, { timeout: 10000 });
-      const [signinElement] = await page.$x(signinSelector);
-      if (signinElement) {
-        await signinElement.click();
+    await page.evaluate(() => {
+      // 尝试通过文本内容查找签到按钮
+      const buttons = document.querySelectorAll('button');
+      for (let button of buttons) {
+        if (button.textContent.includes('签到')) {
+          button.click();
+          return;
+        }
       }
-    }
+      // 尝试其他元素类型
+      const elements = document.querySelectorAll('*');
+      for (let element of elements) {
+        if (element.textContent.includes('签到') && element.tagName !== 'SCRIPT' && element.tagName !== 'STYLE') {
+          element.click();
+          return;
+        }
+      }
+    });
     
     // 等待签到完成
     await new Promise(resolve => setTimeout(resolve, 3000));
@@ -130,9 +166,14 @@ async function autoSignin() {
     
     // 出错时也截图
     if (browser) {
-      const page = (await browser.pages())[0];
-      if (page) {
-        await page.screenshot({ path: 'signin-error.png', fullPage: true });
+      try {
+        const pages = await browser.pages();
+        if (pages.length > 0) {
+          const currentPage = pages[0];
+          await currentPage.screenshot({ path: 'signin-error.png', fullPage: true });
+        }
+      } catch (e) {
+        console.error('截图失败：', e);
       }
     }
     
