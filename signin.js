@@ -104,10 +104,50 @@ async function autoSignin() {
     
     // 直接跳转到签到页面
     console.log('7. 正在跳转到签到页面...');
-    await page.goto('https://cheapyun.com/#/app/point/earn', {
-      waitUntil: 'networkidle2',
-      timeout: 60000
-    });
+    
+    // 尝试多次跳转
+    let跳转成功 = false;
+    const max跳转尝试 = 3;
+    
+    for (let i = 1; i <= max跳转尝试; i++) {
+      try {
+        console.log(`7.1 第 ${i} 次尝试跳转...`);
+        await page.goto('https://cheapyun.com/#/app/point/earn', {
+          waitUntil: 'networkidle2',
+          timeout: 60000
+        });
+        
+        // 等待页面加载
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+        // 检查当前URL
+        const currentUrl = await page.url();
+        console.log(`7.2 当前URL：${currentUrl}`);
+        
+        if (currentUrl.includes('point/earn')) {
+          console.log('7.3 跳转成功！');
+          跳转成功 = true;
+          break;
+        } else {
+          console.log('7.4 跳转失败，等待重试...');
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+      } catch (e) {
+        console.log(`7.5 跳转出错：${e.message}`);
+        if (i < max跳转尝试) {
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+      }
+    }
+    
+    if (!跳转成功) {
+      console.log('7.6 多次跳转失败，尝试备用方案...');
+      // 尝试使用evaluate执行跳转
+      await page.evaluate(() => {
+        window.location.href = 'https://cheapyun.com/#/app/point/earn';
+      });
+      await new Promise(resolve => setTimeout(resolve, 8000));
+    }
     
     // 等待页面加载
     console.log('8. 等待签到页面加载...');
@@ -118,18 +158,6 @@ async function autoSignin() {
     const currentUrl = await page.url();
     console.log('8.1 页面标题：', pageTitle);
     console.log('8.2 当前URL：', currentUrl);
-    
-    // 检查是否成功跳转到签到页面
-    if (!currentUrl.includes('/app/point/earn')) {
-      console.log('8.3 页面未跳转到签到页面，尝试再次跳转...');
-      await page.goto('https://cheapyun.com/#/app/point/earn', {
-        waitUntil: 'networkidle2',
-        timeout: 60000
-      });
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      const newUrl = await page.url();
-      console.log('8.4 新URL：', newUrl);
-    }
     
     // 截图：签到页面
     console.log('8.3 保存签到页面截图...');
@@ -144,78 +172,127 @@ async function autoSignin() {
       const xpath = '//*[@id="app"]/section/div[2]/div/div[1]/div/section/div/div[1]/div/div[2]/div/div[2]/div/div/div/div[2]/a';
       console.log('9.1 使用XPath：', xpath);
       
-      // 多次尝试查找并点击元素
-      const maxAttempts = 10;
-      const attemptDelay = 3000;
+      // 使用evaluate方法来查找和点击元素
+      console.log('9.2 尝试使用evaluate查找元素...');
       
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        console.log(`9.2 尝试第 ${attempt} 次...`);
+      // 多次尝试
+      const max尝试次数 = 10;
+      const尝试间隔 = 3000;
+      
+      for (let attempt = 1; attempt <= max尝试次数; attempt++) {
+        console.log(`9.3 尝试第 ${attempt} 次...`);
         
-        // 使用evaluate方法替代page.$x
-        signinClicked = await page.evaluate((xpath) => {
-          const elements = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-          if (elements.snapshotLength > 0) {
-            const element = elements.snapshotItem(0);
-            const style = window.getComputedStyle(element);
-            if (style.display !== 'none' && style.visibility === 'visible' && style.opacity !== '0') {
-              element.click();
-              return true;
+        // 使用evaluate执行XPath查找和点击
+        const点击成功 = await page.evaluate((xpath) => {
+          try {
+            const elements = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+            if (elements.snapshotLength > 0) {
+              const element = elements.snapshotItem(0);
+              if (element) {
+                // 检查元素是否可见
+                const style = window.getComputedStyle(element);
+                const isVisible = style.display !== 'none' && style.visibility === 'visible' && style.opacity !== '0';
+                
+                if (isVisible) {
+                  element.click();
+                  return true;
+                } else {
+                  console.log('元素存在但不可见');
+                  return false;
+                }
+              }
             }
+            return false;
+          } catch (e) {
+            console.log('查找元素出错：', e.message);
+            return false;
           }
-          return false;
         }, xpath);
         
-        if (signinClicked) {
-          console.log('9.3 签到按钮点击成功');
+        if (点击成功) {
+          signinClicked = true;
+          console.log('9.4 签到按钮点击成功');
           break;
         } else {
-          console.log('9.4 未找到签到按钮或按钮不可见，等待重试...');
+          console.log('9.5 未找到签到按钮，等待重试...');
         }
         
         // 等待一段时间后重试
-        if (attempt < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, attemptDelay));
+        if (attempt < max尝试次数) {
+          await new Promise(resolve => setTimeout(resolve, 尝试间隔));
         }
       }
       
       if (!signinClicked) {
-        console.log('9.7 多次尝试后仍未找到签到按钮');
+        console.log('9.6 多次尝试后仍未找到签到按钮');
+        
+        // 尝试查找包含签到文字的元素
+        console.log('9.7 尝试通过文字查找签到按钮...');
+        const文字点击成功 = await page.evaluate(() => {
+          const关键词 = ['签到', '每日', '领取'];
+          const元素 = document.querySelectorAll('*');
+          
+          for (let el of 元素) {
+            if (el.textContent) {
+              for (let 关键词 of 关键词) {
+                if (el.textContent.includes(关键词)) {
+                  try {
+                    el.click();
+                    return true;
+                  } catch (e) {
+                    continue;
+                  }
+                }
+              }
+            }
+          }
+          return false;
+        });
+        
+        if (文字点击成功) {
+          signinClicked = true;
+          console.log('9.8 通过文字查找并点击成功');
+        }
       }
       
     } catch (e) {
-      console.log('9.8 签到按钮点击失败：', e.message);
+      console.log('9.9 签到按钮点击失败：', e.message);
       
       // 输出更多调试信息
       try {
         const pageContent = await page.content();
-        console.log('9.9 页面内容长度：', pageContent.length);
-        console.log('9.10 保存详细错误截图...');
+        console.log('9.10 页面内容长度：', pageContent.length);
+        console.log('9.11 保存详细错误截图...');
         await page.screenshot({ path: path.join(screenshotDir, 'signin-button-error.png'), fullPage: true });
         
         // 尝试查找页面中的所有链接和按钮
-        console.log('9.11 查找页面中的所有可点击元素...');
-        const clickableElements = await page.$$('a, button');
-        console.log('9.12 找到可点击元素数量：', clickableElements.length);
+        console.log('9.12 查找页面中的所有可点击元素...');
+        const可点击元素数量 = await page.evaluate(() => {
+          return document.querySelectorAll('a, button').length;
+        });
+        console.log('9.13 找到可点击元素数量：', 可点击元素数量);
         
         // 尝试获取页面中包含"签到"或"领取"的元素
-        console.log('9.13 查找包含签到相关文字的元素...');
-        const elements = await page.$$('*');
-        let foundElements = 0;
-        for (let element of elements) {
-          try {
-            const text = await element.evaluate(el => el.textContent);
-            if (text && (text.includes('签到') || text.includes('领取'))) {
-              console.log('9.14 找到相关元素：', text.trim());
-              foundElements++;
-              if (foundElements >= 5) break; // 只输出前5个
+        console.log('9.14 查找包含签到相关文字的元素...');
+        const相关元素 = await page.evaluate(() => {
+          const结果 = [];
+          const元素 = document.querySelectorAll('*');
+          let找到数量 = 0;
+          
+          for (let el of 元素) {
+            if (el.textContent && (el.textContent.includes('签到') || el.textContent.includes('领取'))) {
+              结果.push(el.textContent.trim());
+              找到数量++;
+              if (找到数量 >= 5) break;
             }
-          } catch (innerError) {
-            // 忽略单个元素的错误
           }
-        }
+          return 结果;
+        });
+        
+        console.log('9.15 找到相关元素：', 相关元素);
         
       } catch (debugError) {
-        console.log('9.15 调试信息获取失败：', debugError.message);
+        console.log('9.16 调试信息获取失败：', debugError.message);
       }
     }
     
