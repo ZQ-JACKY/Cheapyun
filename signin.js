@@ -105,21 +105,42 @@ async function autoSignin() {
     console.log('6. 正在点击积分中心...');
     let pointCenterClicked = false;
     
+    // 尝试多种方法查找积分中心
     await page.evaluate(() => {
-      // 尝试通过文本内容查找积分中心
-      const links = document.querySelectorAll('a');
-      for (let link of links) {
-        if (link.textContent.includes('积分中心')) {
-          link.click();
+      // 方法1：通过文本内容查找
+      const elements = document.querySelectorAll('*');
+      for (let element of elements) {
+        if (element.textContent.trim() === '积分中心' && element.tagName !== 'SCRIPT' && element.tagName !== 'STYLE') {
+          element.click();
           return true;
         }
       }
-      // 尝试通过href查找
-      const pointLinks = document.querySelectorAll('a[href*="point"]');
-      if (pointLinks.length > 0) {
-        pointLinks[0].click();
-        return true;
+      
+      // 方法2：通过包含文本查找
+      for (let element of elements) {
+        if (element.textContent.includes('积分中心') && element.tagName !== 'SCRIPT' && element.tagName !== 'STYLE') {
+          element.click();
+          return true;
+        }
       }
+      
+      // 方法3：通过class或id查找
+      const possibleSelectors = [
+        '.point-center', '.integral-center', '#point-center', '#integral-center',
+        'a[href*="point"]', 'a[href*="integral"]',
+        'li:contains("积分中心")', 'div:contains("积分中心")'
+      ];
+      
+      for (let selector of possibleSelectors) {
+        try {
+          const element = document.querySelector(selector);
+          if (element) {
+            element.click();
+            return true;
+          }
+        } catch (e) {}
+      }
+      
       return false;
     }).then(result => {
       pointCenterClicked = result;
@@ -129,33 +150,72 @@ async function autoSignin() {
       console.log('6.1 积分中心点击成功');
     } else {
       console.log('6.1 积分中心未找到或点击失败');
+      // 尝试使用更广泛的查找方法
+      await page.evaluate(() => {
+        // 查找所有可点击元素
+        const clickableElements = document.querySelectorAll('a, button, [role="button"]');
+        for (let element of clickableElements) {
+          if (element.textContent.includes('积分') || element.textContent.includes('point') || element.textContent.includes('integral')) {
+            element.click();
+            return true;
+          }
+        }
+        return false;
+      }).then(result => {
+        if (result) {
+          console.log('6.2 尝试其他方法点击积分中心成功');
+          pointCenterClicked = true;
+        }
+      });
     }
     
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    // 等待页面加载
+    await new Promise(resolve => setTimeout(resolve, 5000));
     
     // 截图：点击积分中心后
-    console.log('6.2 保存点击积分中心后截图...');
+    console.log('6.3 保存点击积分中心后截图...');
     await page.screenshot({ path: '4-after-point-center.png', fullPage: true });
     
     // 点击任务大厅
     console.log('7. 正在点击任务大厅...');
     let taskHallClicked = false;
     
+    // 尝试多种方法查找任务大厅
     await page.evaluate(() => {
-      // 尝试通过文本内容查找任务大厅
-      const links = document.querySelectorAll('a');
-      for (let link of links) {
-        if (link.textContent.includes('任务大厅')) {
-          link.click();
+      // 方法1：通过文本内容查找
+      const elements = document.querySelectorAll('*');
+      for (let element of elements) {
+        if (element.textContent.trim() === '任务大厅' && element.tagName !== 'SCRIPT' && element.tagName !== 'STYLE') {
+          element.click();
           return true;
         }
       }
-      // 尝试通过href查找
-      const taskLinks = document.querySelectorAll('a[href*="task"]');
-      if (taskLinks.length > 0) {
-        taskLinks[0].click();
-        return true;
+      
+      // 方法2：通过包含文本查找
+      for (let element of elements) {
+        if (element.textContent.includes('任务大厅') && element.tagName !== 'SCRIPT' && element.tagName !== 'STYLE') {
+          element.click();
+          return true;
+        }
       }
+      
+      // 方法3：通过class或id查找
+      const possibleSelectors = [
+        '.task-hall', '.task-center', '#task-hall', '#task-center',
+        'a[href*="task"]', 'a[href*="mission"]',
+        'li:contains("任务大厅")', 'div:contains("任务大厅")'
+      ];
+      
+      for (let selector of possibleSelectors) {
+        try {
+          const element = document.querySelector(selector);
+          if (element) {
+            element.click();
+            return true;
+          }
+        } catch (e) {}
+      }
+      
       return false;
     }).then(result => {
       taskHallClicked = result;
@@ -165,35 +225,71 @@ async function autoSignin() {
       console.log('7.1 任务大厅点击成功');
     } else {
       console.log('7.1 任务大厅未找到或点击失败');
+      // 尝试使用更广泛的查找方法
+      await page.evaluate(() => {
+        // 查找所有可点击元素
+        const clickableElements = document.querySelectorAll('a, button, [role="button"]');
+        for (let element of clickableElements) {
+          if (element.textContent.includes('任务') || element.textContent.includes('task') || element.textContent.includes('mission')) {
+            element.click();
+            return true;
+          }
+        }
+        return false;
+      }).then(result => {
+        if (result) {
+          console.log('7.2 尝试其他方法点击任务大厅成功');
+          taskHallClicked = true;
+        }
+      });
     }
     
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    // 等待页面加载
+    await new Promise(resolve => setTimeout(resolve, 5000));
     
     // 截图：进入任务大厅后
-    console.log('7.2 保存进入任务大厅后截图...');
+    console.log('7.3 保存进入任务大厅后截图...');
     await page.screenshot({ path: '5-after-task-hall.png', fullPage: true });
     
     // 点击签到按钮
     console.log('8. 正在点击签到按钮...');
     let signinClicked = false;
     
+    // 尝试多种方法查找签到按钮
     await page.evaluate(() => {
-      // 尝试通过文本内容查找签到按钮
-      const buttons = document.querySelectorAll('button');
-      for (let button of buttons) {
-        if (button.textContent.includes('签到')) {
-          button.click();
+      // 方法1：通过文本内容查找
+      const elements = document.querySelectorAll('*');
+      for (let element of elements) {
+        if (element.textContent.trim() === '签到' && element.tagName !== 'SCRIPT' && element.tagName !== 'STYLE') {
+          element.click();
           return true;
         }
       }
-      // 尝试其他元素类型
-      const elements = document.querySelectorAll('*');
+      
+      // 方法2：通过包含文本查找
       for (let element of elements) {
         if (element.textContent.includes('签到') && element.tagName !== 'SCRIPT' && element.tagName !== 'STYLE') {
           element.click();
           return true;
         }
       }
+      
+      // 方法3：通过class或id查找
+      const possibleSelectors = [
+        '.signin', '.checkin', '#signin', '#checkin',
+        'button:contains("签到")', 'a:contains("签到")'
+      ];
+      
+      for (let selector of possibleSelectors) {
+        try {
+          const element = document.querySelector(selector);
+          if (element) {
+            element.click();
+            return true;
+          }
+        } catch (e) {}
+      }
+      
       return false;
     }).then(result => {
       signinClicked = result;
@@ -203,13 +299,30 @@ async function autoSignin() {
       console.log('8.1 签到按钮点击成功');
     } else {
       console.log('8.1 签到按钮未找到或点击失败');
+      // 尝试使用更广泛的查找方法
+      await page.evaluate(() => {
+        // 查找所有可点击元素
+        const clickableElements = document.querySelectorAll('a, button, [role="button"]');
+        for (let element of clickableElements) {
+          if (element.textContent.includes('签') || element.textContent.includes('sign')) {
+            element.click();
+            return true;
+          }
+        }
+        return false;
+      }).then(result => {
+        if (result) {
+          console.log('8.2 尝试其他方法点击签到按钮成功');
+          signinClicked = true;
+        }
+      });
     }
     
     // 等待签到完成
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise(resolve => setTimeout(resolve, 5000));
     
     // 截图：签到后
-    console.log('8.2 保存签到后截图...');
+    console.log('8.3 保存签到后截图...');
     await page.screenshot({ path: '6-after-signin.png', fullPage: true });
     
     // 最终截图保存结果
@@ -225,6 +338,13 @@ async function autoSignin() {
     console.log('5-after-task-hall.png - 进入任务大厅后');
     console.log('6-after-signin.png - 点击签到按钮后');
     console.log('signin-result.png - 最终结果');
+    
+    // 输出执行状态
+    console.log('\n执行状态总结：');
+    console.log(`登录状态：成功（页面标题：${pageTitle}）`);
+    console.log(`积分中心：${pointCenterClicked ? '成功' : '失败'}`);
+    console.log(`任务大厅：${taskHallClicked ? '成功' : '失败'}`);
+    console.log(`签到操作：${signinClicked ? '成功' : '失败'}`);
     
   } catch (error) {
     console.error('执行过程中发生错误：', error);
