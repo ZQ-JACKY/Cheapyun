@@ -119,6 +119,18 @@ async function autoSignin() {
     console.log('8.1 页面标题：', pageTitle);
     console.log('8.2 当前URL：', currentUrl);
     
+    // 检查是否成功跳转到签到页面
+    if (!currentUrl.includes('/app/point/earn')) {
+      console.log('8.3 页面未跳转到签到页面，尝试再次跳转...');
+      await page.goto('https://cheapyun.com/#/app/point/earn', {
+        waitUntil: 'networkidle2',
+        timeout: 60000
+      });
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      const newUrl = await page.url();
+      console.log('8.4 新URL：', newUrl);
+    }
+    
     // 截图：签到页面
     console.log('8.3 保存签到页面截图...');
     await page.screenshot({ path: path.join(screenshotDir, '1-signin-page.png'), fullPage: true });
@@ -139,28 +151,25 @@ async function autoSignin() {
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         console.log(`9.2 尝试第 ${attempt} 次...`);
         
-        // 直接查找元素
-        const [element] = await page.$x(xpath);
-        
-        if (element) {
-          console.log('9.3 找到签到按钮，准备点击...');
-          
-          // 检查元素是否可见
-          const isVisible = await page.evaluate(el => {
-            const style = window.getComputedStyle(el);
-            return style.display !== 'none' && style.visibility === 'visible' && style.opacity !== '0';
-          }, element);
-          
-          if (isVisible) {
-            await element.click();
-            signinClicked = true;
-            console.log('9.4 签到按钮点击成功');
-            break;
-          } else {
-            console.log('9.5 签到按钮存在但不可见');
+        // 使用evaluate方法替代page.$x
+        signinClicked = await page.evaluate((xpath) => {
+          const elements = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+          if (elements.snapshotLength > 0) {
+            const element = elements.snapshotItem(0);
+            const style = window.getComputedStyle(element);
+            if (style.display !== 'none' && style.visibility === 'visible' && style.opacity !== '0') {
+              element.click();
+              return true;
+            }
           }
+          return false;
+        }, xpath);
+        
+        if (signinClicked) {
+          console.log('9.3 签到按钮点击成功');
+          break;
         } else {
-          console.log('9.6 未找到签到按钮，等待重试...');
+          console.log('9.4 未找到签到按钮或按钮不可见，等待重试...');
         }
         
         // 等待一段时间后重试
