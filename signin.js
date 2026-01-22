@@ -1,6 +1,55 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
+
+// 发送 Telegram 通知
+async function sendTelegramNotification(botToken, chatId, message) {
+  if (!botToken || !chatId) {
+    console.log('未设置 Telegram 机器人 Token 或 Chat ID，跳过通知');
+    return;
+  }
+  
+  try {
+    const data = JSON.stringify({
+      chat_id: chatId,
+      text: message,
+      parse_mode: 'Markdown'
+    });
+    
+    const options = {
+      hostname: 'api.telegram.org',
+      path: `/bot${botToken}/sendMessage`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': data.length
+      }
+    };
+    
+    return new Promise((resolve, reject) => {
+      const req = https.request(options, (res) => {
+        let responseData = '';
+        res.on('data', (chunk) => {
+          responseData += chunk;
+        });
+        res.on('end', () => {
+          resolve(responseData);
+        });
+      });
+      
+      req.on('error', (error) => {
+        console.log('发送 Telegram 通知失败:', error.message);
+        reject(error);
+      });
+      
+      req.write(data);
+      req.end();
+    });
+  } catch (error) {
+    console.log('发送 Telegram 通知异常:', error.message);
+  }
+}
 
 async function autoSignin() {
   console.log('开始执行自动签到任务...');
@@ -8,6 +57,8 @@ async function autoSignin() {
   // 读取环境变量
   const username = process.env.USERNAME;
   const password = process.env.PASSWORD;
+  const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
+  const telegramChatId = process.env.TELEGRAM_CHAT_ID;
   
   if (!username || !password) {
     console.error('错误：未设置账号密码环境变量');
@@ -313,6 +364,31 @@ async function autoSignin() {
     console.log('\n执行状态总结：');
     console.log(`签到操作：${signinClicked ? '成功' : '失败'}`);
     
+    // 发送 Telegram 通知
+    console.log('11. 发送执行结果通知...');
+    const notificationMessage = `
+# 廉价云自动签到结果
+
+## 执行时间
+${new Date().toLocaleString('zh-CN')}
+
+## 账号信息
+账号：${username}
+
+## 执行状态
+- 签到操作：${signinClicked ? '✅ 成功' : '❌ 失败'}
+
+## 详细信息
+- 当前页面：${currentUrl}
+- 页面标题：${pageTitle}
+
+## 备注
+- 截图已保存到 GitHub Actions 工件中
+- 如有问题请查看执行日志
+`;
+    
+    await sendTelegramNotification(telegramBotToken, telegramChatId, notificationMessage);
+    
   } catch (error) {
     console.error('执行过程中发生错误：', error);
     
@@ -329,6 +405,30 @@ async function autoSignin() {
         console.error('截图失败：', e);
       }
     }
+    
+    // 发送错误通知
+    console.log('11. 发送错误通知...');
+    const errorMessage = `
+# 廉价云自动签到失败
+
+## 执行时间
+${new Date().toLocaleString('zh-CN')}
+
+## 账号信息
+账号：${username}
+
+## 错误信息
+${error.message}
+
+## 错误详情
+${error.stack ? error.stack.substring(0, 500) : '无详细信息'}
+
+## 备注
+- 错误截图已保存到 GitHub Actions 工件中
+- 请检查执行日志以获取更多信息
+`;
+    
+    await sendTelegramNotification(telegramBotToken, telegramChatId, errorMessage);
     
   } finally {
     // 关闭浏览器
