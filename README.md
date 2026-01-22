@@ -20,32 +20,9 @@
 2. 接着在 GitHub 仓库的 `Settings` → `Secrets and variables` → `Actions` 中添加以下 secrets：
    - `USERNAME`: 廉价云账号
    - `PASSWORD`: 廉价云密码
-   - `TELEGRAM_BOT_TOKEN`: Telegram 机器人 Token（可选，用于接收通知）
-   - `TELEGRAM_CHAT_ID`: Telegram 聊天 ID（可选，用于接收通知）
 3. 最后点击`Actions`,运行工作流`自动签到`
 
-### Telegram 通知配置
 
-#### 1. 创建 Telegram 机器人
-
-1. 在 Telegram 中搜索并开始对话 `@BotFather`
-2. 发送 `/newbot` 命令创建新机器人
-3. 按照提示输入机器人名称（如 `CheapYunSigninBot`）
-4. 输入机器人用户名（必须以 `bot` 结尾，如 `CheapYunSigninBot`）
-5. BotFather 会生成一个 Token，复制这个 Token（格式：`123456789:ABCdefGhIjKlMnOpQrStUvWxYz`）
-
-#### 2. 获取 Chat ID
-
-1. 在 Telegram 中搜索并开始对话 `@userinfobot`
-2. 发送任意消息，机器人会回复您的 Chat ID
-3. 复制这个 Chat ID（格式：`123456789`）
-
-
-#### 3. 配置环境变量
-
-将获取到的 `YOUR_BOT_TOKEN` 和 `YOUR_CHAT_ID` 设置GitHub Secrets：
-- `TELEGRAM_BOT_TOKEN`: 您的机器人 Token
-- `TELEGRAM_CHAT_ID`: 您的 Chat ID
 ## 故障排除
 
 ### 常见问题
@@ -72,15 +49,14 @@
 
 ## 注意事项
 
-1. **账号安全**：请妥善保管您的账号密码和 Telegram 机器人 Token，不要在代码中硬编码
+1. **账号安全**：请妥善保管您的账号密码，不要在代码中硬编码
 2. **使用频率**：建议合理设置签到频率，避免过于频繁的操作
 3. **网站变更**：如果廉价云网站结构发生变更，可能需要更新脚本中的 XPath 路径
 4. **GitHub Actions 限制**：免费版 GitHub Actions 有执行时间限制，请合理配置
-5. **Telegram 限制**：Telegram 对机器人发送消息有一定限制，请不要过于频繁地发送通知
 
 ## 脚本执行流程
 
-1. 检查环境变量（账号密码、Telegram 配置）
+1. 检查环境变量（账号密码）
 2. 启动浏览器并设置参数
 3. 访问登录页面并输入账号密码
 4. 点击登录按钮
@@ -88,8 +64,7 @@
 6. 尝试查找并点击签到按钮
 7. 保存操作截图
 8. 输出执行结果
-9. 发送 Telegram 通知（如果配置了）
-10. 关闭浏览器
+9. 关闭浏览器
 
 
 ## 许可证
