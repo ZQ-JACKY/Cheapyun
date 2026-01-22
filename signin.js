@@ -183,7 +183,7 @@ async function autoSignin() {
         console.log(`9.3 尝试第 ${attempt} 次...`);
         
         // 使用evaluate执行XPath查找和点击
-        const点击成功 = await page.evaluate((xpath) => {
+        const 点击成功 = await page.evaluate((xpath) => {
           try {
             const elements = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
             if (elements.snapshotLength > 0) {
@@ -228,9 +228,9 @@ async function autoSignin() {
         
         // 尝试查找包含签到文字的元素
         console.log('9.7 尝试通过文字查找签到按钮...');
-        const文字点击成功 = await page.evaluate(() => {
-          const关键词 = ['签到', '每日', '领取'];
-          const元素 = document.querySelectorAll('*');
+        const 文字点击成功 = await page.evaluate(() => {
+          const 关键词 = ['签到', '每日', '领取'];
+          const 元素 = document.querySelectorAll('*');
           
           for (let el of 元素) {
             if (el.textContent) {
