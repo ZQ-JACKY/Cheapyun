@@ -169,7 +169,7 @@ async function autoSignin() {
     
     try {
       // 使用提供的XPath
-      const xpath = '//*[@id="app"]/section/div[2]/div/div[1]/div/section/div/div[1]/div/div[2]/div/div[2]/div/div/div/div[2]/a';
+      const xpath = '//*[@id="app"]/section/div[2]/div/div[1]/div/section/div/div[1]/div/div[2]/div/div[3]/div/div/div/div[2]/a';
       console.log('9.1 使用XPath：', xpath);
       
       // 使用evaluate方法来查找和点击元素
