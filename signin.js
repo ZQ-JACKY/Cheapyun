@@ -13,13 +13,30 @@ async function sendTelegramNotification(botToken, chatId, message) {
   console.log('开始发送 Telegram 通知...');
   console.log('Bot Token:', botToken.substring(0, 10) + '...'); // 只显示前10个字符
   console.log('Chat ID:', chatId);
+  console.log('Message 参数类型:', typeof message);
+  console.log('Message 参数值:', message);
+  console.log('Message 长度:', message ? message.length : 0);
   
   try {
-    const data = JSON.stringify({
+    // 确保 message 是字符串
+    if (!message || typeof message !== 'string' || message.trim() === '') {
+      console.log('消息为空或不是字符串，跳过发送');
+      return;
+    }
+    
+    const payload = {
       chat_id: chatId,
-      text: message,
-      parse_mode: 'Markdown'
-    });
+      text: message
+      // 移除 parse_mode，使用纯文本
+    };
+    
+    console.log('Payload 对象:', payload);
+    console.log('Payload.text:', payload.text);
+    console.log('Payload.text 长度:', payload.text.length);
+    
+    const data = JSON.stringify(payload);
+    console.log('JSON 序列化结果:', data);
+    console.log('JSON 数据长度:', data.length);
     
     const options = {
       hostname: 'api.telegram.org',
@@ -32,7 +49,7 @@ async function sendTelegramNotification(botToken, chatId, message) {
     };
     
     console.log('请求 URL:', `https://api.telegram.org/bot${botToken.substring(0, 10)}.../sendMessage`);
-    console.log('请求数据长度:', data.length);
+    console.log('请求头:', options.headers);
     
     return new Promise((resolve, reject) => {
       const req = https.request(options, (res) => {
@@ -54,8 +71,10 @@ async function sendTelegramNotification(botToken, chatId, message) {
         reject(error);
       });
       
+      console.log('准备发送请求数据...');
       req.write(data);
       req.end();
+      console.log('请求已发送');
     });
   } catch (error) {
     console.log('发送 Telegram 通知异常:', error.message);
@@ -387,8 +406,10 @@ async function autoSignin() {
     console.log('Telegram Bot Token:', telegramBotToken ? telegramBotToken.substring(0, 10) + '...' : '未设置');
     console.log('Telegram Chat ID:', telegramChatId ? telegramChatId : '未设置');
     
-    // 构建通知消息（使用单行字符串避免空消息问题）
-    const notificationMessage = '# 廉价云自动签到结果\n\n## 执行时间\n' + new Date().toLocaleString('zh-CN') + '\n\n## 账号信息\n账号：' + username + '\n\n## 执行状态\n- 签到操作：' + (signinClicked ? '✅ 成功' : '❌ 失败') + '\n\n## 详细信息\n- 当前页面：' + currentUrl + '\n- 页面标题：' + pageTitle + '\n\n## 备注\n- 截图已保存到 GitHub Actions 工件中\n- 如有问题请查看执行日志';
+    // 构建通知消息（使用纯文本，避免 Markdown 格式问题）
+    const notificationMessage = '廉价云自动签到结果\n\n执行时间：' + new Date().toLocaleString('zh-CN') + '\n账号：' + username + '\n签到操作：' + (signinClicked ? '成功' : '失败') + '\n当前页面：' + currentUrl + '\n页面标题：' + pageTitle;
+    
+    console.log('构建的通知消息:', notificationMessage);
     
     console.log('通知消息长度:', notificationMessage.length);
     console.log('通知消息前50字符:', notificationMessage.substring(0, 50) + '...');
@@ -417,8 +438,10 @@ async function autoSignin() {
     console.log('Telegram Bot Token:', telegramBotToken ? telegramBotToken.substring(0, 10) + '...' : '未设置');
     console.log('Telegram Chat ID:', telegramChatId ? telegramChatId : '未设置');
     
-    // 构建错误通知消息（使用单行字符串避免空消息问题）
-    const errorMessage = '# 廉价云自动签到失败\n\n## 执行时间\n' + new Date().toLocaleString('zh-CN') + '\n\n## 账号信息\n账号：' + username + '\n\n## 错误信息\n' + error.message + '\n\n## 错误详情\n' + (error.stack ? error.stack.substring(0, 500) : '无详细信息') + '\n\n## 备注\n- 错误截图已保存到 GitHub Actions 工件中\n- 请检查执行日志以获取更多信息';
+    // 构建错误通知消息（使用纯文本，避免 Markdown 格式问题）
+    const errorMessage = '廉价云自动签到失败\n\n执行时间：' + new Date().toLocaleString('zh-CN') + '\n账号：' + username + '\n错误信息：' + error.message + '\n错误详情：' + (error.stack ? error.stack.substring(0, 500) : '无详细信息') + '\n备注：错误截图已保存到 GitHub Actions 工件中，请检查执行日志以获取更多信息';
+    
+    console.log('构建的错误通知消息:', errorMessage);
     
     console.log('错误通知消息长度:', errorMessage.length);
     console.log('错误通知消息前50字符:', errorMessage.substring(0, 50) + '...');
