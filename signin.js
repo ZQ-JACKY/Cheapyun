@@ -1,86 +1,6 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
-const https = require('https');
-
-// 发送 Telegram 通知
-async function sendTelegramNotification(botToken, chatId, message) {
-  if (!botToken || !chatId) {
-    console.log('未设置 Telegram 机器人 Token 或 Chat ID，跳过通知');
-    return;
-  }
-  
-  console.log('开始发送 Telegram 通知...');
-  console.log('Bot Token:', botToken.substring(0, 10) + '...'); // 只显示前10个字符
-  console.log('Chat ID:', chatId);
-  console.log('Message 参数类型:', typeof message);
-  console.log('Message 参数值:', message);
-  console.log('Message 长度:', message ? message.length : 0);
-  
-  try {
-    // 确保 message 是字符串
-    if (!message || typeof message !== 'string' || message.trim() === '') {
-      console.log('消息为空或不是字符串，跳过发送');
-      return;
-    }
-    
-    const payload = {
-      chat_id: chatId,
-      text: message
-      // 移除 parse_mode，使用纯文本
-    };
-    
-    console.log('Payload 对象:', payload);
-    console.log('Payload.text:', payload.text);
-    console.log('Payload.text 长度:', payload.text.length);
-    
-    const data = JSON.stringify(payload);
-    console.log('JSON 序列化结果:', data);
-    console.log('JSON 数据长度:', data.length);
-    
-    const options = {
-      hostname: 'api.telegram.org',
-      path: `/bot${botToken}/sendMessage`,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': data.length
-      }
-    };
-    
-    console.log('请求 URL:', `https://api.telegram.org/bot${botToken.substring(0, 10)}.../sendMessage`);
-    console.log('请求头:', options.headers);
-    
-    return new Promise((resolve, reject) => {
-      const req = https.request(options, (res) => {
-        let responseData = '';
-        console.log('响应状态码:', res.statusCode);
-        console.log('响应头:', res.headers);
-        
-        res.on('data', (chunk) => {
-          responseData += chunk;
-        });
-        res.on('end', () => {
-          console.log('响应数据:', responseData);
-          resolve(responseData);
-        });
-      });
-      
-      req.on('error', (error) => {
-        console.log('发送 Telegram 通知失败:', error.message);
-        reject(error);
-      });
-      
-      console.log('准备发送请求数据...');
-      req.write(data);
-      req.end();
-      console.log('请求已发送');
-    });
-  } catch (error) {
-    console.log('发送 Telegram 通知异常:', error.message);
-    console.log('错误堆栈:', error.stack);
-  }
-}
 
 async function autoSignin() {
   console.log('开始执行自动签到任务...');
@@ -88,14 +8,10 @@ async function autoSignin() {
   // 读取环境变量
   const username = process.env.USERNAME;
   const password = process.env.PASSWORD;
-  const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
-  const telegramChatId = process.env.TELEGRAM_CHAT_ID;
   
   console.log('环境变量读取结果：');
   console.log('USERNAME:', username);
   console.log('PASSWORD:', password ? '已设置' : '未设置');
-  console.log('TELEGRAM_BOT_TOKEN:', telegramBotToken ? '已设置' : '未设置');
-  console.log('TELEGRAM_CHAT_ID:', telegramChatId ? '已设置' : '未设置');
   
   if (!username || !password) {
     console.error('错误：未设置账号密码环境变量');
@@ -401,21 +317,6 @@ async function autoSignin() {
     console.log('\n执行状态总结：');
     console.log(`签到操作：${signinClicked ? '成功' : '失败'}`);
     
-    // 发送 Telegram 通知
-    console.log('11. 发送执行结果通知...');
-    console.log('Telegram Bot Token:', telegramBotToken ? telegramBotToken.substring(0, 10) + '...' : '未设置');
-    console.log('Telegram Chat ID:', telegramChatId ? telegramChatId : '未设置');
-    
-    // 构建通知消息（使用纯文本，避免 Markdown 格式问题）
-    const notificationMessage = '廉价云自动签到结果\n\n执行时间：' + new Date().toLocaleString('zh-CN') + '\n账号：' + username + '\n签到操作：' + (signinClicked ? '成功' : '失败') + '\n当前页面：' + currentUrl + '\n页面标题：' + pageTitle;
-    
-    console.log('构建的通知消息:', notificationMessage);
-    
-    console.log('通知消息长度:', notificationMessage.length);
-    console.log('通知消息前50字符:', notificationMessage.substring(0, 50) + '...');
-    
-    await sendTelegramNotification(telegramBotToken, telegramChatId, notificationMessage);
-    
   } catch (error) {
     console.error('执行过程中发生错误：', error);
     
@@ -433,20 +334,7 @@ async function autoSignin() {
       }
     }
     
-    // 发送错误通知
-    console.log('11. 发送错误通知...');
-    console.log('Telegram Bot Token:', telegramBotToken ? telegramBotToken.substring(0, 10) + '...' : '未设置');
-    console.log('Telegram Chat ID:', telegramChatId ? telegramChatId : '未设置');
-    
-    // 构建错误通知消息（使用纯文本，避免 Markdown 格式问题）
-    const errorMessage = '廉价云自动签到失败\n\n执行时间：' + new Date().toLocaleString('zh-CN') + '\n账号：' + username + '\n错误信息：' + error.message + '\n错误详情：' + (error.stack ? error.stack.substring(0, 500) : '无详细信息') + '\n备注：错误截图已保存到 GitHub Actions 工件中，请检查执行日志以获取更多信息';
-    
-    console.log('构建的错误通知消息:', errorMessage);
-    
-    console.log('错误通知消息长度:', errorMessage.length);
-    console.log('错误通知消息前50字符:', errorMessage.substring(0, 50) + '...');
-    
-    await sendTelegramNotification(telegramBotToken, telegramChatId, errorMessage);
+
     
   } finally {
     // 关闭浏览器
