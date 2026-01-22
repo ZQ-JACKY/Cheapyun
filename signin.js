@@ -25,6 +25,10 @@ async function autoSignin() {
       fs.mkdirSync(screenshotDir, { recursive: true });
     }
     
+    // 检测是否在 GitHub Actions 中运行
+    const isGitHubActions = process.env.GITHUB_ACTIONS === 'true';
+    console.log(`运行环境：${isGitHubActions ? 'GitHub Actions' : '本地'}`);
+    
     // 启动浏览器
     browser = await puppeteer.launch({
       headless: true,
@@ -160,6 +164,13 @@ async function autoSignin() {
         return true;
       }
       
+      // 尝试其他选择器
+      const sidebarItems = Array.from(document.querySelectorAll('.sidebar-item, .menu-item, .nav-item'));
+      if (sidebarItems.length >= 4) {
+        sidebarItems[3].click();
+        return true;
+      }
+      
       return false;
     }).then(result => {
       pointCenterClicked = result;
@@ -172,7 +183,7 @@ async function autoSignin() {
       // 尝试其他方法
       await page.evaluate(() => {
         // 尝试点击左侧边栏的所有可能元素
-        const leftSidebar = document.querySelector('.el-aside, .sidebar, #sidebar');
+        const leftSidebar = document.querySelector('.el-aside, .sidebar, #sidebar, .left-sidebar');
         if (leftSidebar) {
           const elements = leftSidebar.querySelectorAll('*');
           if (elements.length >= 4) {
@@ -195,10 +206,10 @@ async function autoSignin() {
     
     await page.evaluate(() => {
       // 尝试查找积分中心的子菜单
-      const subMenus = Array.from(document.querySelectorAll('.el-submenu .el-menu, .submenu, .dropdown-menu, .el-menu .el-menu'));
+      const subMenus = Array.from(document.querySelectorAll('.el-submenu .el-menu, .submenu, .dropdown-menu, .el-menu .el-menu, .children-menu'));
       
       for (let subMenu of subMenus) {
-        const subMenuItems = Array.from(subMenu.querySelectorAll('li, .el-menu-item, .nav-item'));
+        const subMenuItems = Array.from(subMenu.querySelectorAll('li, .el-menu-item, .nav-item, .menu-item'));
         if (subMenuItems.length > 0) {
           // 点击子菜单的第1个项目
           subMenuItems[0].click();
@@ -207,7 +218,7 @@ async function autoSignin() {
       }
       
       // 尝试查找所有可见的菜单项，点击第5个（假设是任务大厅）
-      const allMenuItems = Array.from(document.querySelectorAll('.el-menu-item, .el-submenu__title, .nav-item, li'));
+      const allMenuItems = Array.from(document.querySelectorAll('.el-menu-item, .el-submenu__title, .nav-item, li, .menu-item'));
       const visibleItems = allMenuItems.filter(item => {
         const style = window.getComputedStyle(item);
         return style.display !== 'none' && style.visibility === 'visible';
@@ -242,7 +253,7 @@ async function autoSignin() {
     
     await page.evaluate(() => {
       // 方法1：尝试查找包含特定文本的元素
-      const keywords = ['签到', '每日', '领取', 'sign', 'daily'];
+      const keywords = ['签到', '每日', '领取', 'sign', 'daily', 'checkin'];
       const elements = Array.from(document.querySelectorAll('*'));
       
       for (let element of elements) {
@@ -260,14 +271,14 @@ async function autoSignin() {
       // 方法2：尝试点击所有按钮
       const buttons = Array.from(document.querySelectorAll('button'));
       for (let button of buttons) {
-        if (button.style.cursor === 'pointer' || button.classList.contains('el-button')) {
+        if (button.style.cursor === 'pointer' || button.classList.contains('el-button') || button.classList.contains('btn')) {
           button.click();
           return true;
         }
       }
       
       // 方法3：尝试点击卡片元素
-      const cards = Array.from(document.querySelectorAll('.el-card, .card, .panel, .box'));
+      const cards = Array.from(document.querySelectorAll('.el-card, .card, .panel, .box, .task-card'));
       for (let card of cards) {
         if (card.textContent) {
           card.click();
