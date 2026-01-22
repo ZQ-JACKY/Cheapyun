@@ -384,26 +384,14 @@ async function autoSignin() {
     
     // 发送 Telegram 通知
     console.log('11. 发送执行结果通知...');
-    const notificationMessage = `
-# 廉价云自动签到结果
-
-## 执行时间
-${new Date().toLocaleString('zh-CN')}
-
-## 账号信息
-账号：${username}
-
-## 执行状态
-- 签到操作：${signinClicked ? '✅ 成功' : '❌ 失败'}
-
-## 详细信息
-- 当前页面：${currentUrl}
-- 页面标题：${pageTitle}
-
-## 备注
-- 截图已保存到 GitHub Actions 工件中
-- 如有问题请查看执行日志
-`;
+    console.log('Telegram Bot Token:', telegramBotToken ? telegramBotToken.substring(0, 10) + '...' : '未设置');
+    console.log('Telegram Chat ID:', telegramChatId ? telegramChatId : '未设置');
+    
+    // 构建通知消息（使用单行字符串避免空消息问题）
+    const notificationMessage = '# 廉价云自动签到结果\n\n## 执行时间\n' + new Date().toLocaleString('zh-CN') + '\n\n## 账号信息\n账号：' + username + '\n\n## 执行状态\n- 签到操作：' + (signinClicked ? '✅ 成功' : '❌ 失败') + '\n\n## 详细信息\n- 当前页面：' + currentUrl + '\n- 页面标题：' + pageTitle + '\n\n## 备注\n- 截图已保存到 GitHub Actions 工件中\n- 如有问题请查看执行日志';
+    
+    console.log('通知消息长度:', notificationMessage.length);
+    console.log('通知消息前50字符:', notificationMessage.substring(0, 50) + '...');
     
     await sendTelegramNotification(telegramBotToken, telegramChatId, notificationMessage);
     
@@ -426,25 +414,14 @@ ${new Date().toLocaleString('zh-CN')}
     
     // 发送错误通知
     console.log('11. 发送错误通知...');
-    const errorMessage = `
-# 廉价云自动签到失败
-
-## 执行时间
-${new Date().toLocaleString('zh-CN')}
-
-## 账号信息
-账号：${username}
-
-## 错误信息
-${error.message}
-
-## 错误详情
-${error.stack ? error.stack.substring(0, 500) : '无详细信息'}
-
-## 备注
-- 错误截图已保存到 GitHub Actions 工件中
-- 请检查执行日志以获取更多信息
-`;
+    console.log('Telegram Bot Token:', telegramBotToken ? telegramBotToken.substring(0, 10) + '...' : '未设置');
+    console.log('Telegram Chat ID:', telegramChatId ? telegramChatId : '未设置');
+    
+    // 构建错误通知消息（使用单行字符串避免空消息问题）
+    const errorMessage = '# 廉价云自动签到失败\n\n## 执行时间\n' + new Date().toLocaleString('zh-CN') + '\n\n## 账号信息\n账号：' + username + '\n\n## 错误信息\n' + error.message + '\n\n## 错误详情\n' + (error.stack ? error.stack.substring(0, 500) : '无详细信息') + '\n\n## 备注\n- 错误截图已保存到 GitHub Actions 工件中\n- 请检查执行日志以获取更多信息';
+    
+    console.log('错误通知消息长度:', errorMessage.length);
+    console.log('错误通知消息前50字符:', errorMessage.substring(0, 50) + '...');
     
     await sendTelegramNotification(telegramBotToken, telegramChatId, errorMessage);
     
