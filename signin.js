@@ -101,85 +101,27 @@ async function autoSignin() {
     console.log('5.1 保存登录成功后截图...');
     await page.screenshot({ path: '3-after-login.png', fullPage: true });
     
-    // 尝试点击左上角的菜单按钮
-    console.log('5.2 尝试点击左上角菜单按钮...');
-    await page.evaluate(() => {
-      // 尝试查找左上角的菜单按钮（三条横线图标）
-      const menuButtons = [
-        document.querySelector('.el-menu'),
-        document.querySelector('.sidebar-toggle'),
-        document.querySelector('.menu-button'),
-        document.querySelector('#sidebar-toggle'),
-        document.querySelector('#menu-button'),
-        document.querySelector('button[class*="menu"]'),
-        document.querySelector('i[class*="menu"]'),
-        document.querySelector('i[class*="bars"]'),
-        document.querySelector('i[class*="nav"]'),
-        document.querySelector('.logo + button'),
-        document.querySelector('.logo + i'),
-        document.querySelector('.el-aside .el-menu'),
-        document.querySelector('.el-header button'),
-        document.querySelector('.el-header i')
-      ];
-      
-      for (let button of menuButtons) {
-        if (button) {
-          button.click();
-          return true;
-        }
-      }
-      
-      // 尝试点击左上角的任何按钮
-      const topLeftElements = document.querySelectorAll('.el-header > *');
-      for (let element of topLeftElements) {
-        if (element.tagName === 'BUTTON' || element.tagName === 'I' || element.style.cursor === 'pointer') {
-          element.click();
-          return true;
-        }
-      }
-      
-      return false;
-    });
-    
-    // 等待菜单展开
+    // 等待侧边栏加载完成
     await new Promise(resolve => setTimeout(resolve, 3000));
     
-    // 截图：菜单展开后
-    console.log('5.3 保存菜单展开后截图...');
-    await page.screenshot({ path: '3a-after-menu.png', fullPage: true });
-    
-    // 尝试点击左侧菜单的第二个或第三个项目（假设是积分中心）
-    console.log('6. 正在点击积分中心...');
+    // 尝试点击侧边栏第4个项目（积分中心，索引为3）
+    console.log('6. 正在点击侧边栏第4个项目（积分中心）...');
     let pointCenterClicked = false;
     
     await page.evaluate(() => {
-      // 方法1：通过左侧菜单项目索引点击
-      const menuItems = document.querySelectorAll('.el-menu-item, .el-submenu__title, .nav-item');
-      if (menuItems.length >= 3) {
-        // 假设第三个项目是积分中心
-        menuItems[2].click();
+      // 只使用一种方法：通过左侧菜单项目索引点击（第4个，索引为3）
+      const menuItems = document.querySelectorAll('.el-menu-item, .el-submenu__title, .nav-item, .el-menu > li');
+      console.log('找到的菜单项数量：', menuItems.length);
+      
+      if (menuItems.length >= 4) {
+        // 侧边栏第4个项目（索引为3）
+        console.log('点击第4个菜单项（索引3）');
+        menuItems[3].click();
         return true;
+      } else {
+        console.log('菜单项数量不足4个');
+        return false;
       }
-      
-      // 方法2：通过包含图标的元素点击
-      const iconElements = document.querySelectorAll('i[class*="icon"]');
-      for (let i = 0; i < iconElements.length; i++) {
-        if (i === 2) { // 假设第三个图标是积分中心
-          iconElements[i].click();
-          return true;
-        }
-      }
-      
-      // 方法3：通过左侧导航栏的元素点击
-      const leftNavElements = document.querySelectorAll('.el-aside *');
-      for (let i = 0; i < leftNavElements.length; i++) {
-        if (i > 0 && i < leftNavElements.length - 1) {
-          leftNavElements[i].click();
-          return true;
-        }
-      }
-      
-      return false;
     }).then(result => {
       pointCenterClicked = result;
     });
@@ -190,42 +132,40 @@ async function autoSignin() {
       console.log('6.1 积分中心未找到或点击失败');
     }
     
-    // 等待页面加载
+    // 等待积分中心展开子菜单
     await new Promise(resolve => setTimeout(resolve, 5000));
     
-    // 截图：点击积分中心后
-    console.log('6.2 保存点击积分中心后截图...');
+    // 截图：积分中心展开后
+    console.log('6.2 保存积分中心展开后截图...');
     await page.screenshot({ path: '4-after-point-center.png', fullPage: true });
     
-    // 尝试点击任务大厅（假设是左侧菜单的第四个项目）
-    console.log('7. 正在点击任务大厅...');
+    // 尝试点击积分中心下的第1个项目（任务大厅，索引为0）
+    console.log('7. 正在点击积分中心下的第1个项目（任务大厅）...');
     let taskHallClicked = false;
     
     await page.evaluate(() => {
-      // 方法1：通过左侧菜单项目索引点击
-      const menuItems = document.querySelectorAll('.el-menu-item, .el-submenu__title, .nav-item');
-      if (menuItems.length >= 4) {
-        // 假设第四个项目是任务大厅
-        menuItems[3].click();
+      // 方法1：尝试查找积分中心的子菜单
+      const subMenus = document.querySelectorAll('.el-submenu .el-menu, .submenu, .dropdown-menu, .el-menu .el-menu');
+      console.log('找到的子菜单数量：', subMenus.length);
+      
+      for (let subMenu of subMenus) {
+        const subMenuItems = subMenu.querySelectorAll('li, .el-menu-item, .nav-item');
+        console.log('子菜单中的项目数量：', subMenuItems.length);
+        
+        if (subMenuItems.length > 0) {
+          // 点击子菜单的第1个项目（索引为0）
+          console.log('点击子菜单的第1个项目（索引0）');
+          subMenuItems[0].click();
+          return true;
+        }
+      }
+      
+      // 方法2：如果子菜单查找失败，尝试点击所有菜单项中的第5个（假设是积分中心的子菜单第1个）
+      const allMenuItems = document.querySelectorAll('.el-menu-item, .el-submenu__title, .nav-item, .el-menu > li');
+      if (allMenuItems.length >= 5) {
+        console.log('点击所有菜单项中的第5个（索引4）');
+        allMenuItems[4].click();
         return true;
-      }
-      
-      // 方法2：通过包含图标的元素点击
-      const iconElements = document.querySelectorAll('i[class*="icon"]');
-      for (let i = 0; i < iconElements.length; i++) {
-        if (i === 3) { // 假设第四个图标是任务大厅
-          iconElements[i].click();
-          return true;
-        }
-      }
-      
-      // 方法3：尝试点击页面中的任何按钮
-      const buttons = document.querySelectorAll('button');
-      for (let button of buttons) {
-        if (button.textContent || button.style.cursor === 'pointer') {
-          button.click();
-          return true;
-        }
       }
       
       return false;
@@ -239,65 +179,15 @@ async function autoSignin() {
       console.log('7.1 任务大厅未找到或点击失败');
     }
     
-    // 等待页面加载
+    // 等待任务大厅加载
     await new Promise(resolve => setTimeout(resolve, 5000));
     
     // 截图：进入任务大厅后
     console.log('7.2 保存进入任务大厅后截图...');
     await page.screenshot({ path: '5-after-task-hall.png', fullPage: true });
     
-    // 尝试点击签到按钮
-    console.log('8. 正在点击签到按钮...');
-    let signinClicked = false;
-    
-    await page.evaluate(() => {
-      // 方法1：尝试点击页面中的所有按钮
-      const buttons = document.querySelectorAll('button');
-      for (let button of buttons) {
-        if (button.textContent || button.style.cursor === 'pointer') {
-          button.click();
-          return true;
-        }
-      }
-      
-      // 方法2：尝试点击页面中包含数字的元素
-      const elements = document.querySelectorAll('*');
-      for (let element of elements) {
-        if (element.textContent && !isNaN(element.textContent.trim()) && element.style.cursor === 'pointer') {
-          element.click();
-          return true;
-        }
-      }
-      
-      // 方法3：尝试点击页面中的卡片元素
-      const cards = document.querySelectorAll('.el-card, .card, .panel');
-      for (let card of cards) {
-        if (card.textContent) {
-          card.click();
-          return true;
-        }
-      }
-      
-      return false;
-    }).then(result => {
-      signinClicked = result;
-    });
-    
-    if (signinClicked) {
-      console.log('8.1 签到按钮点击成功');
-    } else {
-      console.log('8.1 签到按钮未找到或点击失败');
-    }
-    
-    // 等待签到完成
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // 截图：签到后
-    console.log('8.2 保存签到后截图...');
-    await page.screenshot({ path: '6-after-signin.png', fullPage: true });
-    
     // 最终截图保存结果
-    console.log('9. 正在保存最终结果截图...');
+    console.log('8. 正在保存最终结果截图...');
     await page.screenshot({ path: 'signin-result.png', fullPage: true });
     
     console.log('自动签到任务执行完成！');
@@ -305,10 +195,8 @@ async function autoSignin() {
     console.log('1-login-page.png - 登录页面');
     console.log('2-after-input.png - 输入账号密码后');
     console.log('3-after-login.png - 登录成功后');
-    console.log('3a-after-menu.png - 菜单展开后');
     console.log('4-after-point-center.png - 点击积分中心后');
     console.log('5-after-task-hall.png - 进入任务大厅后');
-    console.log('6-after-signin.png - 点击签到按钮后');
     console.log('signin-result.png - 最终结果');
     
     // 输出执行状态
@@ -316,7 +204,6 @@ async function autoSignin() {
     console.log(`登录状态：成功（页面标题：${pageTitle}）`);
     console.log(`积分中心：${pointCenterClicked ? '成功' : '失败'}`);
     console.log(`任务大厅：${taskHallClicked ? '成功' : '失败'}`);
-    console.log(`签到操作：${signinClicked ? '成功' : '失败'}`);
     
   } catch (error) {
     console.error('执行过程中发生错误：', error);
