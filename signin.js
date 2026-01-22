@@ -60,7 +60,7 @@ async function autoSignin() {
     await page.click('button[type="button"]');
     
     // 等待登录成功
-    await page.waitForTimeout(5000);
+    await page.waitFor(5000);
     
     // 检查是否登录成功
     const pageTitle = await page.title();
@@ -82,7 +82,7 @@ async function autoSignin() {
       }
     }
     
-    await page.waitForTimeout(3000);
+    await page.waitFor(3000);
     
     // 点击任务大厅
     console.log('正在点击任务大厅...');
@@ -99,7 +99,7 @@ async function autoSignin() {
       }
     }
     
-    await page.waitForTimeout(3000);
+    await page.waitFor(3000);
     
     // 点击签到按钮
     console.log('正在点击签到按钮...');
@@ -117,7 +117,7 @@ async function autoSignin() {
     }
     
     // 等待签到完成
-    await page.waitForTimeout(3000);
+    await page.waitFor(3000);
     
     // 截图保存结果
     console.log('正在保存签到结果截图...');
