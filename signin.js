@@ -124,7 +124,14 @@ async function autoSignin() {
     try {
       // 使用提供的XPath
       const xpath = '//*[@id="app"]/section/div[2]/div/div[1]/div/section/div/div[1]/div/div[2]/div/div[3]/div/div/div/div[2]/a';
-      await page.waitForXPath(xpath, { timeout: 30000 });
+      
+      // 等待元素出现并可点击
+      await page.waitForFunction((xpath) => {
+        const elements = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+        return elements.snapshotLength > 0;
+      }, { timeout: 30000 }, xpath);
+      
+      // 查找并点击元素
       const [element] = await page.$x(xpath);
       if (element) {
         await element.click();
