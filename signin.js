@@ -10,6 +10,10 @@ async function sendTelegramNotification(botToken, chatId, message) {
     return;
   }
   
+  console.log('开始发送 Telegram 通知...');
+  console.log('Bot Token:', botToken.substring(0, 10) + '...'); // 只显示前10个字符
+  console.log('Chat ID:', chatId);
+  
   try {
     const data = JSON.stringify({
       chat_id: chatId,
@@ -27,13 +31,20 @@ async function sendTelegramNotification(botToken, chatId, message) {
       }
     };
     
+    console.log('请求 URL:', `https://api.telegram.org/bot${botToken.substring(0, 10)}.../sendMessage`);
+    console.log('请求数据长度:', data.length);
+    
     return new Promise((resolve, reject) => {
       const req = https.request(options, (res) => {
         let responseData = '';
+        console.log('响应状态码:', res.statusCode);
+        console.log('响应头:', res.headers);
+        
         res.on('data', (chunk) => {
           responseData += chunk;
         });
         res.on('end', () => {
+          console.log('响应数据:', responseData);
           resolve(responseData);
         });
       });
@@ -48,6 +59,7 @@ async function sendTelegramNotification(botToken, chatId, message) {
     });
   } catch (error) {
     console.log('发送 Telegram 通知异常:', error.message);
+    console.log('错误堆栈:', error.stack);
   }
 }
 
@@ -59,6 +71,12 @@ async function autoSignin() {
   const password = process.env.PASSWORD;
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
   const telegramChatId = process.env.TELEGRAM_CHAT_ID;
+  
+  console.log('环境变量读取结果：');
+  console.log('USERNAME:', username);
+  console.log('PASSWORD:', password ? '已设置' : '未设置');
+  console.log('TELEGRAM_BOT_TOKEN:', telegramBotToken ? '已设置' : '未设置');
+  console.log('TELEGRAM_CHAT_ID:', telegramChatId ? '已设置' : '未设置');
   
   if (!username || !password) {
     console.error('错误：未设置账号密码环境变量');
