@@ -3,7 +3,7 @@ name: Test Cron
 on:
   schedule:
     - cron: '* * * * *'
-
+  workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
